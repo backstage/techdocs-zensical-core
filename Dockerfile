@@ -1,15 +1,32 @@
-FROM python:3.14-alpine@sha256:dd4d2bd5b53d9b25a51da13addf2be586beebd5387e289e798e4083d94ca837a
+# Copyright 2026 The Backstage Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+FROM python:3.14-alpine
 
 WORKDIR /input
 
+# System dependencies for PlantUML and Graphviz diagram rendering
 RUN apk update && \
     apk --no-cache add bash graphviz plantuml && \
     rm -rf /var/cache/apk/*
 
+# Install Zensical and additional Python Markdown extensions.
+# Zensical already bundles: markdown, pymdown-extensions, pygments.
+# We only add extensions that need separate packages.
 COPY requirements.txt /requirements.txt
 RUN pip install --no-cache-dir -r /requirements.txt
 
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-ENTRYPOINT ["/entrypoint.sh"]
+# Config preprocessing is handled by TechdocsZensicalGenerator in TypeScript.
+# This container just runs the zensical binary.
+ENTRYPOINT ["zensical"]

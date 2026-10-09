@@ -1,18 +1,14 @@
-# Zensical static site generator (replaces mkdocs + mkdocs-material)
-zensical==0.0.40
+# Zensical static site generator
+# Bundles: markdown>=3.7, pymdown-extensions>=11.0, pygments>=2.20
+zensical>=0.0.60
 
-# Config processing
-PyYAML
-
-# Markdown (Zensical uses Python Markdown under the hood)
-Markdown>=3.2,<3.11
-
-# Markdown extensions - pinned versions matching mkdocs-techdocs-core
-markdown-graphviz-inline==1.1.3
+# Third-party Python Markdown extensions not bundled by Zensical.
+# These hook into the Python Markdown processing pipeline that
+# Zensical uses under the hood.
 plantuml-markdown==3.11.2
+markdown-graphviz-inline==1.1.3
 mdx_truly_sane_lists==1.3
-pymdown-extensions==10.21.2
-pygments==2.20.0
 
 # Transitive dependencies for plantuml-markdown
 requests
+urllib3
