@@ -12,20 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM python:3.14-alpine
-
-WORKDIR /input
+# Base on the official Zensical image which already includes:
+# - Python, Zensical, markdown, pymdown-extensions, pygments
+FROM zensical/zensical:0.0.69
 
 # System dependencies for PlantUML and Graphviz diagram rendering
 RUN apk update && \
     apk --no-cache add bash graphviz plantuml && \
     rm -rf /var/cache/apk/*
 
-# Install Zensical and additional Python Markdown extensions.
-# Zensical already bundles: markdown, pymdown-extensions, pygments.
-# We only add extensions that need separate packages.
+# Additional Python Markdown extensions not bundled by Zensical.
+# These hook into Python Markdown's processing pipeline.
 COPY requirements.txt /requirements.txt
 RUN pip install --no-cache-dir -r /requirements.txt
+
+WORKDIR /input
 
 # Config preprocessing is handled by TechdocsZensicalGenerator in TypeScript.
 # This container just runs the zensical binary.
