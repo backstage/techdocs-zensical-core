@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build (no push)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          push: false
+          platforms: linux/amd64
+
+      - name: Build image for testing
+        run: docker build -t techdocs-zensical-test .
+
+      - name: Verify zensical binary
+        run: docker run --rm techdocs-zensical-test --version
+
+      - name: Verify Python Markdown extensions are importable
+        run: |
+          docker run --rm --entrypoint python techdocs-zensical-test -c "import plantuml_markdown; print('plantuml_markdown OK')"
+          docker run --rm --entrypoint python techdocs-zensical-test -c "import markdown_inline_graphviz; print('markdown_inline_graphviz OK')"
+          docker run --rm --entrypoint python techdocs-zensical-test -c "import mdx_truly_sane_lists; print('mdx_truly_sane_lists OK')"
+
+      - name: Verify system dependencies
+        run: |
+          docker run --rm --entrypoint sh techdocs-zensical-test -c "which graphviz || dot -V"
+          docker run --rm --entrypoint sh techdocs-zensical-test -c "which plantuml || plantuml -version"
+
+      - name: Build test docs
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/test-docs:/input \
+            -w /input \
+            techdocs-zensical-test build
+          # Verify output was generated
+          test -f test-docs/site/index.html || (echo "index.html not found" && exit 1)
+          test -f test-docs/site/extensions/index.html || (echo "extensions page not found" && exit 1)
+          echo "Build output verified"
+
+      - name: Verify classic mode CSS classes preserved
+        run: |
+          grep -q 'class="md-content"' test-docs/site/index.html || (echo "Missing .md-content class" && exit 1)
+          grep -q 'class="md-sidebar' test-docs/site/index.html || (echo "Missing .md-sidebar class" && exit 1)
+          grep -q 'data-md-component' test-docs/site/index.html || (echo "Missing data-md-component" && exit 1)
+          echo "Classic mode CSS classes verified"
