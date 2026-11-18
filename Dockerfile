@@ -21,6 +21,11 @@ RUN apk update && \
     apk --no-cache add bash graphviz plantuml && \
     rm -rf /var/cache/apk/*
 
+# Mitigation for CVE-2026-114938 ("Java4Shell") in Alpine's openjdk25-jre-headless,
+# pulled in by plantuml. Effective on x86 only. Remove once Alpine ships a fixed
+# package and the image is rebuilt.
+ENV JAVA_TOOL_OPTIONS="-XX:-UseBASE64Intrinsics"
+
 # Additional Python Markdown extensions not bundled by Zensical.
 # These hook into Python Markdown's processing pipeline.
 COPY requirements.txt /requirements.txt
